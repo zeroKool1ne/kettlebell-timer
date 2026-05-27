@@ -37,6 +37,28 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
 .inf b{color:var(--txt)}
 .cfg.locked{opacity:.4;pointer-events:none}
 
+/* label input (interval) */
+.lbl-inp{flex:1;max-width:180px;height:34px;background:var(--bdr);border:none;border-radius:8px;
+  color:var(--txt);padding:0 10px;font-size:14px;font-weight:600}
+.lbl-inp::placeholder{color:var(--dim);font-weight:400}
+
+/* exercise names section */
+.exn-toggle{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;
+  border-top:1px solid var(--bdr);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  background:none;border-left:none;border-right:none;border-bottom:none;width:100%;
+  color:var(--dim);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.exn-toggle:active{opacity:.6}
+.exarr{transition:transform .2s;font-size:9px;display:inline-block}
+.exarr.open{transform:rotate(90deg)}
+#exInputs{display:none;padding-top:7px;
+  display:grid;grid-template-columns:1fr 1fr;gap:5px}
+#exInputs.hidden{display:none!important}
+.ex-wrap{display:flex;align-items:center;gap:4px}
+.ex-num{font-size:11px;color:var(--dim);min-width:14px;text-align:right;flex-shrink:0}
+.ex-inp{flex:1;height:30px;background:var(--bdr);border:none;border-radius:6px;
+  color:var(--txt);padding:0 7px;font-size:13px;min-width:0}
+.ex-inp::placeholder{color:var(--dim)}
+
 /* ── Progress ── */
 .prog{height:4px;background:var(--bdr)}
 #bar{height:4px;width:0%}
@@ -45,9 +67,12 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
 .arena{flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;padding:16px;transition:background .35s}
 .lbl{font-size:15px;font-weight:800;letter-spacing:4px;text-transform:uppercase;margin-bottom:4px}
-.clk{font-size:88px;font-weight:200;letter-spacing:-4px;line-height:1;
-  font-variant-numeric:tabular-nums;margin-bottom:16px}
-.s1{font-size:19px;font-weight:600;margin-bottom:4px}
+.clk{font-size:82px;font-weight:200;letter-spacing:-4px;line-height:1;
+  font-variant-numeric:tabular-nums;margin-bottom:8px}
+.exname{font-size:22px;font-weight:700;letter-spacing:.5px;min-height:28px;
+  margin-bottom:10px;text-align:center}
+.exname.next{font-size:16px;font-weight:500;color:var(--dim)}
+.s1{font-size:18px;font-weight:600;margin-bottom:4px}
 .s2{font-size:13px;color:var(--dim)}
 
 /* ── Phase colors ── */
@@ -63,6 +88,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
 .pd .arena{background:rgba(100,220,100,.07)}
 .pd .lbl{color:#6ee7b7;font-size:26px;letter-spacing:2px}
 .pd .clk{display:none}
+.pd .exname{display:none}
 
 /* ── Phase-change flash ── */
 @keyframes fl{0%{opacity:.3}100%{opacity:1}}
@@ -104,6 +130,10 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
       <input type="number" id="it" value="20" min="1" max="180" onchange="rc()">
       <button ontouchstart="" onclick="a('it',1)">+</button></div>
       <span class="unit">min</span></div>
+    <div class="row" style="margin-bottom:0">
+      <label>Übungsname</label>
+      <input type="text" class="lbl-inp" id="ilabel" placeholder="z.B. Swing">
+    </div>
     <div class="inf" id="ii"></div>
   </div>
 
@@ -135,6 +165,10 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
       <button ontouchstart="" onclick="a('rrp',5)">+</button></div>
       <span class="unit">sek</span></div>
     <div class="inf" id="ri"></div>
+    <button class="exn-toggle" onclick="toggleExN()">
+      <span class="exarr" id="exarr">▶</span> Übungen benennen
+    </button>
+    <div id="exInputs" class="hidden"></div>
   </div>
 
 </div>
@@ -144,6 +178,7 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
 <div class="arena" id="arena">
   <div class="lbl" id="lbl">BEREIT</div>
   <div class="clk" id="clk">00:40</div>
+  <div class="exname" id="exn"></div>
   <div class="s1"  id="s1"></div>
   <div class="s2"  id="s2"></div>
 </div>
@@ -165,6 +200,9 @@ let iSec=0,tSec=0,totW=0,wN=0,iTot=0,iPh='w'; // iPh: w=work, b=rest
 let rSec=0,rTot=0,rRnd=0,rEx=0,rTot0=0,rItot=0;
 let rPh='w'; // w=work, ep=exPause, rp=roundPause
 
+// exercise names
+let exNames=[],exNOpen=false,lastExN=-1;
+
 let tick=null,ctx=null,wl=null;
 
 // ── mode ──────────────────────────────────────────────────────────────────────
@@ -174,6 +212,7 @@ function setMode(m){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',(i===0&&m==='i')||(i===1&&m==='r')));
   $('gi').classList.toggle('on',m==='i');
   $('gr').classList.toggle('on',m==='r');
+  if(m==='r')buildExInputs();
   rc();
 }
 
@@ -191,8 +230,34 @@ function rc(){
     const n=+$('rn').value||5,e=+$('re').value||6,w=+$('rw').value||40,ep=+$('rep').value||10,rp=+$('rrp').value||60;
     const rLen=e*w+(e-1)*ep,tot=n*rLen+(n-1)*rp;
     $('ri').innerHTML=`→ <b>${n}×${e}</b> Übungen · <b>${fmt(tot)}</b> Gesamt`;
-    if(S==='idle'){$('clk').textContent=fmt(w);$('s1').textContent=`Runde 0 / ${n}`;$('s2').textContent=`Gesamt: ${fmt(tot)}`}
+    if(S==='idle'){$('clk').textContent=fmt(w);$('s1').textContent=`Runde 0 / ${n}`;$('s2').textContent=`Gesamt: ${fmt(tot)}`;$('exn').textContent=''}
+    buildExInputs();
   }
+}
+
+// ── exercise names ────────────────────────────────────────────────────────────
+function buildExInputs(){
+  const n=+$('re').value||6;
+  if(n===lastExN)return;
+  lastExN=n;
+  while(exNames.length<n)exNames.push('');
+  exNames.length=n;
+  const c=$('exInputs');c.innerHTML='';
+  for(let i=0;i<n;i++){
+    const w=document.createElement('div');w.className='ex-wrap';
+    const num=document.createElement('span');num.className='ex-num';num.textContent=i+1;
+    const inp=document.createElement('input');inp.type='text';inp.className='ex-inp';
+    inp.placeholder=`Übung ${i+1}`;inp.value=exNames[i];
+    inp.addEventListener('input',e=>{exNames[i]=e.target.value});
+    w.appendChild(num);w.appendChild(inp);c.appendChild(w);
+  }
+}
+
+function toggleExN(){
+  exNOpen=!exNOpen;
+  $('exInputs').classList.toggle('hidden',!exNOpen);
+  $('exarr').classList.toggle('open',exNOpen);
+  $('exarr').textContent=exNOpen?'▼':'▶';
 }
 
 // ── audio ─────────────────────────────────────────────────────────────────────
@@ -261,7 +326,10 @@ function tickI(){
 }
 
 function updateI(){
+  const label=($('ilabel').value||'').trim();
   $('clk').textContent=fmt(iSec);
+  $('exn').textContent=iPh==='w'?label:'';
+  $('exn').className='exname';
   $('s1').textContent=iPh==='w'?`Arbeit ${wN} / ${totW}`:`Pause ${wN} / ${totW-1}`;
   $('s2').textContent=`Gesamt: ${fmt(tSec)}`;
   $('bar').style.width=`${((iTot-iSec)/iTot)*100}%`;
@@ -302,6 +370,16 @@ function tickR(){
 function updateR(){
   $('clk').textContent=fmt(rSec);
   const n=+$('rn').value||5,e=+$('re').value||6;
+  // exercise name: show current; during pause show next
+  if(rPh==='w'){
+    $('exn').textContent=exNames[rEx-1]||'';$('exn').className='exname';
+  } else if(rPh==='ep'){
+    const nxt=exNames[rEx]||''; // rEx not yet incremented → next is index rEx
+    $('exn').textContent=nxt?`→ ${nxt}`:'';$('exn').className='exname next';
+  } else {
+    const first=exNames[0]||'';
+    $('exn').textContent=first?`→ ${first}`:'';$('exn').className='exname next';
+  }
   if(rPh==='w')      $('s1').textContent=`Runde ${rRnd} / ${n}  ·  Übung ${rEx} / ${e}`;
   else if(rPh==='ep')$('s1').textContent=`Runde ${rRnd} / ${n}  ·  nächste Übung ${rEx+1}`;
   else               $('s1').textContent=`Runde ${rRnd} / ${n}  ·  Rundenpause`;
@@ -355,7 +433,7 @@ function doRst(){
   $('R').className='pi';lock(false);
   $('go').textContent='START';$('go').className='btn go';
   $('lbl').textContent='BEREIT';$('bar').style.width='0%';
-  $('s1').textContent='';$('s2').textContent='';
+  $('s1').textContent='';$('s2').textContent='';$('exn').textContent='';
   rc();
 }
 
