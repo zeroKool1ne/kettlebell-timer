@@ -2,175 +2,131 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Intervall Timer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Kettlebell Timer</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --w:#ff6b35;--b:#4ecdc4;--rp:#8b5cf6;
   --bg:#111827;--sur:#1f2937;--txt:#f3f4f6;--dim:#9ca3af;--bdr:#374151
 }
+html,body{height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
-  min-height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-
-/* ── Mode tabs ── */
-.tabs{display:flex;gap:6px;padding:10px 14px 0;background:var(--sur)}
-.tab{flex:1;height:34px;border:2px solid var(--bdr);border-radius:9px;background:transparent;
-  color:var(--dim);font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
-  cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s}
-.tab.on{background:var(--bdr);color:var(--txt)}
-.tabs.locked{opacity:.4;pointer-events:none}
+  display:flex;flex-direction:column}
 
 /* ── Settings ── */
-.cfg{padding:9px 14px 11px;background:var(--sur);border-bottom:1px solid var(--bdr)}
-.grp{display:none}.grp.on{display:block}
+.cfg{padding:9px 14px 11px;background:var(--sur);border-bottom:1px solid var(--bdr);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:58vh;flex-shrink:0}
 .row{display:flex;align-items:center;margin-bottom:6px}
 .row label{flex:1;font-size:13px;color:var(--dim)}
 .stp{display:flex;align-items:center;gap:4px}
-.stp button{width:34px;height:34px;border:none;border-radius:8px;background:var(--bdr);
-  color:var(--txt);font-size:20px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.stp button{width:38px;height:38px;border:none;border-radius:8px;background:var(--bdr);
+  color:var(--txt);font-size:22px;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0}
 .stp button:active{filter:brightness(.7)}
-.stp input{width:56px;height:34px;background:var(--bdr);border:none;border-radius:8px;
+.stp input{width:62px;height:38px;background:var(--bdr);border:none;border-radius:8px;
   color:var(--txt);text-align:center;font-size:16px;font-weight:700}
 .unit{margin-left:5px;font-size:11px;color:var(--dim);width:22px}
-.inf{font-size:11px;color:var(--dim);margin-top:2px}
+.inf{font-size:11px;color:var(--dim);margin-top:2px;margin-bottom:2px}
 .inf b{color:var(--txt)}
 .cfg.locked{opacity:.4;pointer-events:none}
 
-/* label input (interval) */
-.lbl-inp{flex:1;max-width:180px;height:34px;background:var(--bdr);border:none;border-radius:8px;
-  color:var(--txt);padding:0 10px;font-size:14px;font-weight:600}
-.lbl-inp::placeholder{color:var(--dim);font-weight:400}
-
-/* exercise names section */
+/* ── Exercise names ── */
 .exn-toggle{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;
   border-top:1px solid var(--bdr);cursor:pointer;-webkit-tap-highlight-color:transparent;
   background:none;border-left:none;border-right:none;border-bottom:none;width:100%;
   color:var(--dim);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
 .exn-toggle:active{opacity:.6}
-.exarr{transition:transform .2s;font-size:9px;display:inline-block}
+.exarr{transition:transform .2s;font-size:9px}
 .exarr.open{transform:rotate(90deg)}
-#exInputs{display:none;padding-top:7px;
-  display:grid;grid-template-columns:1fr 1fr;gap:5px}
-#exInputs.hidden{display:none!important}
+#exInputs{padding-top:7px;display:none;grid-template-columns:1fr 1fr;gap:5px}
+#exInputs.open{display:grid}
 .ex-wrap{display:flex;align-items:center;gap:4px}
-.ex-num{font-size:11px;color:var(--dim);min-width:14px;text-align:right;flex-shrink:0}
-.ex-inp{flex:1;height:30px;background:var(--bdr);border:none;border-radius:6px;
-  color:var(--txt);padding:0 7px;font-size:13px;min-width:0}
+.ex-num{font-size:12px;color:var(--dim);min-width:16px;text-align:right;flex-shrink:0}
+.ex-inp{flex:1;height:38px;background:var(--bdr);border:none;border-radius:6px;
+  color:var(--txt);padding:0 8px;font-size:16px;min-width:0} /* 16px = no iOS zoom */
 .ex-inp::placeholder{color:var(--dim)}
 
 /* ── Progress ── */
-.prog{height:4px;background:var(--bdr)}
+.prog{height:4px;background:var(--bdr);flex-shrink:0}
 #bar{height:4px;width:0%}
 
 /* ── Arena ── */
 .arena{flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:16px;transition:background .35s}
+  justify-content:center;padding:12px;transition:background .35s;overflow:hidden;min-height:0}
 .lbl{font-size:15px;font-weight:800;letter-spacing:4px;text-transform:uppercase;margin-bottom:4px}
-.clk{font-size:82px;font-weight:200;letter-spacing:-4px;line-height:1;
+.clk{font-size:84px;font-weight:200;letter-spacing:-4px;line-height:1;
   font-variant-numeric:tabular-nums;margin-bottom:8px}
-.exname{font-size:22px;font-weight:700;letter-spacing:.5px;min-height:28px;
-  margin-bottom:10px;text-align:center}
+.exname{font-size:24px;font-weight:700;letter-spacing:.5px;min-height:30px;
+  margin-bottom:8px;text-align:center}
 .exname.next{font-size:16px;font-weight:500;color:var(--dim)}
-.s1{font-size:18px;font-weight:600;margin-bottom:4px}
+.s1{font-size:17px;font-weight:600;margin-bottom:4px;text-align:center}
 .s2{font-size:13px;color:var(--dim)}
 
-/* ── Phase colors ── */
-.pw .arena{background:rgba(255,107,53,.07)}
-.pw .lbl{color:var(--w)}
-.pw #bar{background:var(--w)}
-.pb .arena{background:rgba(78,205,196,.07)}
-.pb .lbl{color:var(--b)}
-.pb #bar{background:var(--b)}
-.prp .arena{background:rgba(139,92,246,.07)}
-.prp .lbl{color:var(--rp)}
-.prp #bar{background:var(--rp)}
-.pd .arena{background:rgba(100,220,100,.07)}
-.pd .lbl{color:#6ee7b7;font-size:26px;letter-spacing:2px}
-.pd .clk{display:none}
-.pd .exname{display:none}
+/* Phase colors */
+.pw .arena{background:rgba(255,107,53,.07)}  .pw .lbl{color:var(--w)}  .pw #bar{background:var(--w)}
+.pb .arena{background:rgba(78,205,196,.07)}   .pb .lbl{color:var(--b)}  .pb #bar{background:var(--b)}
+.prp .arena{background:rgba(139,92,246,.07)}  .prp .lbl{color:var(--rp)} .prp #bar{background:var(--rp)}
+.pd .arena{background:rgba(100,220,100,.07)}  .pd .lbl{color:#6ee7b7;font-size:26px;letter-spacing:2px}
+.pd .clk{display:none} .pd .exname{display:none}
 
-/* ── Phase-change flash ── */
-@keyframes fl{0%{opacity:.3}100%{opacity:1}}
+@keyframes fl{0%{opacity:.2}100%{opacity:1}}
 .flash{animation:fl .3s ease-out}
 
 /* ── Controls ── */
-.ctrl{padding:16px 14px 24px;display:flex;gap:10px;justify-content:center}
+.ctrl{padding:14px 14px;padding-bottom:max(20px,env(safe-area-inset-bottom));
+  display:flex;gap:10px;justify-content:center;flex-shrink:0}
 .btn{border:none;border-radius:14px;cursor:pointer;font-weight:800;letter-spacing:1px;
   text-transform:uppercase;-webkit-tap-highlight-color:transparent}
 .btn:active{filter:brightness(.8)}
-.go{flex:1;max-width:220px;height:62px;font-size:18px;background:var(--w);color:#fff}
-.go.run{background:var(--bdr)}.go.pau{background:#6d28d9}
-.rst{width:62px;height:62px;font-size:22px;background:var(--bdr);color:var(--txt)}
+.go{flex:1;max-width:220px;height:64px;font-size:18px;background:var(--w);color:#fff}
+.go.run{background:var(--bdr)} .go.pau{background:#6d28d9}
+.rst{width:64px;height:64px;font-size:22px;background:var(--bdr);color:var(--txt)}
 </style>
 </head>
 <body class="pi" id="R">
 
-<div class="tabs" id="tabs">
-  <button class="tab on" onclick="setMode('i')">Intervall</button>
-  <button class="tab"    onclick="setMode('r')">Runden</button>
-</div>
-
 <div class="cfg" id="cfg">
-
-  <!-- Intervall -->
-  <div class="grp on" id="gi">
-    <div class="row"><label>Arbeitszeit</label>
-      <div class="stp"><button ontouchstart="" onclick="a('iw',-5)">−</button>
-      <input type="number" id="iw" value="40" min="5" max="3600" onchange="rc()">
-      <button ontouchstart="" onclick="a('iw',5)">+</button></div>
-      <span class="unit">sek</span></div>
-    <div class="row"><label>Pausenzeit</label>
-      <div class="stp"><button ontouchstart="" onclick="a('ib',-5)">−</button>
-      <input type="number" id="ib" value="20" min="5" max="3600" onchange="rc()">
-      <button ontouchstart="" onclick="a('ib',5)">+</button></div>
-      <span class="unit">sek</span></div>
-    <div class="row"><label>Gesamtzeit</label>
-      <div class="stp"><button ontouchstart="" onclick="a('it',-1)">−</button>
-      <input type="number" id="it" value="20" min="1" max="180" onchange="rc()">
-      <button ontouchstart="" onclick="a('it',1)">+</button></div>
-      <span class="unit">min</span></div>
-    <div class="row" style="margin-bottom:0">
-      <label>Übungsname</label>
-      <input type="text" class="lbl-inp" id="ilabel" placeholder="z.B. Swing">
-    </div>
-    <div class="inf" id="ii"></div>
-  </div>
-
-  <!-- Runden -->
-  <div class="grp" id="gr">
-    <div class="row"><label>Runden</label>
-      <div class="stp"><button ontouchstart="" onclick="a('rn',-1)">−</button>
+  <div class="row"><label>Runden</label>
+    <div class="stp">
+      <button ontouchstart="" onclick="a('rn',-1)">−</button>
       <input type="number" id="rn" value="5" min="1" max="99" onchange="rc()">
-      <button ontouchstart="" onclick="a('rn',1)">+</button></div>
-      <span class="unit"></span></div>
-    <div class="row"><label>Übungen / Runde</label>
-      <div class="stp"><button ontouchstart="" onclick="a('re',-1)">−</button>
-      <input type="number" id="re" value="6" min="1" max="50" onchange="rc()">
-      <button ontouchstart="" onclick="a('re',1)">+</button></div>
-      <span class="unit"></span></div>
-    <div class="row"><label>Arbeitszeit</label>
-      <div class="stp"><button ontouchstart="" onclick="a('rw',-5)">−</button>
-      <input type="number" id="rw" value="40" min="5" max="3600" onchange="rc()">
-      <button ontouchstart="" onclick="a('rw',5)">+</button></div>
-      <span class="unit">sek</span></div>
-    <div class="row"><label>Pause zw. Übungen</label>
-      <div class="stp"><button ontouchstart="" onclick="a('rep',-5)">−</button>
-      <input type="number" id="rep" value="10" min="0" max="300" onchange="rc()">
-      <button ontouchstart="" onclick="a('rep',5)">+</button></div>
-      <span class="unit">sek</span></div>
-    <div class="row"><label>Pause zw. Runden</label>
-      <div class="stp"><button ontouchstart="" onclick="a('rrp',-5)">−</button>
-      <input type="number" id="rrp" value="60" min="0" max="600" onchange="rc()">
-      <button ontouchstart="" onclick="a('rrp',5)">+</button></div>
-      <span class="unit">sek</span></div>
-    <div class="inf" id="ri"></div>
-    <button class="exn-toggle" onclick="toggleExN()">
-      <span class="exarr" id="exarr">▶</span> Übungen benennen
-    </button>
-    <div id="exInputs" class="hidden"></div>
-  </div>
+      <button ontouchstart="" onclick="a('rn',1)">+</button>
+    </div><span class="unit"></span></div>
 
+  <div class="row"><label>Übungen / Runde</label>
+    <div class="stp">
+      <button ontouchstart="" onclick="a('re',-1)">−</button>
+      <input type="number" id="re" value="6" min="1" max="20" onchange="rc()">
+      <button ontouchstart="" onclick="a('re',1)">+</button>
+    </div><span class="unit"></span></div>
+
+  <div class="row"><label>Arbeitszeit</label>
+    <div class="stp">
+      <button ontouchstart="" onclick="a('rw',-5)">−</button>
+      <input type="number" id="rw" value="40" min="5" max="3600" onchange="rc()">
+      <button ontouchstart="" onclick="a('rw',5)">+</button>
+    </div><span class="unit">sek</span></div>
+
+  <div class="row"><label>Pause zw. Übungen</label>
+    <div class="stp">
+      <button ontouchstart="" onclick="a('rep',-5)">−</button>
+      <input type="number" id="rep" value="10" min="0" max="300" onchange="rc()">
+      <button ontouchstart="" onclick="a('rep',5)">+</button>
+    </div><span class="unit">sek</span></div>
+
+  <div class="row"><label>Pause zw. Runden</label>
+    <div class="stp">
+      <button ontouchstart="" onclick="a('rrp',-5)">−</button>
+      <input type="number" id="rrp" value="60" min="0" max="600" onchange="rc()">
+      <button ontouchstart="" onclick="a('rrp',5)">+</button>
+    </div><span class="unit">sek</span></div>
+
+  <div class="inf" id="ri"></div>
+
+  <button class="exn-toggle" onclick="toggleExN()">
+    <span class="exarr" id="exarr">▶</span> Übungen benennen
+  </button>
+  <div id="exInputs"></div>
 </div>
 
 <div class="prog"><div id="bar"></div></div>
@@ -179,60 +135,42 @@ body{background:var(--bg);color:var(--txt);font-family:-apple-system,sans-serif;
   <div class="lbl" id="lbl">BEREIT</div>
   <div class="clk" id="clk">00:40</div>
   <div class="exname" id="exn"></div>
-  <div class="s1"  id="s1"></div>
-  <div class="s2"  id="s2"></div>
+  <div class="s1" id="s1"></div>
+  <div class="s2" id="s2"></div>
 </div>
 
 <div class="ctrl">
   <button class="btn rst" onclick="doRst()">↺</button>
-  <button class="btn go"  id="go" onclick="doTog()">START</button>
+  <button class="btn go" id="go" onclick="doTog()">START</button>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-let M='i'; // mode: i=interval, r=rounds
-let S='idle'; // idle running paused done
-
-// interval vars
-let iSec=0,tSec=0,totW=0,wN=0,iTot=0,iPh='w'; // iPh: w=work, b=rest
-
-// rounds vars
-let rSec=0,rTot=0,rRnd=0,rEx=0,rTot0=0,rItot=0;
-let rPh='w'; // w=work, ep=exPause, rp=roundPause
-
-// exercise names
+let S='idle';
+let rSec=0,rTot=0,rRnd=0,rEx=0,rItot=0,rPh='w';
 let exNames=[],exNOpen=false,lastExN=-1;
+let ticker=null,ctx=null,wl=null;
 
-let tick=null,ctx=null,wl=null;
-
-// ── mode ──────────────────────────────────────────────────────────────────────
-function setMode(m){
-  if(S!=='idle')return;
-  M=m;
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',(i===0&&m==='i')||(i===1&&m==='r')));
-  $('gi').classList.toggle('on',m==='i');
-  $('gr').classList.toggle('on',m==='r');
-  if(m==='r')buildExInputs();
-  rc();
-}
+// ── iOS keyboard fix: reset scroll + viewport on blur ─────────────────────────
+document.addEventListener('focusout',()=>{
+  setTimeout(()=>{ window.scrollTo(0,0); document.documentElement.scrollTop=0 },200);
+});
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 function fmt(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`}
 function a(id,d){const e=$(id);e.value=Math.max(+e.min,Math.min(+e.max,+e.value+d));rc()}
 
 function rc(){
-  if(M==='i'){
-    const w=+$('iw').value||40,b=+$('ib').value||20,t=(+$('it').value||20)*60;
-    const rds=Math.floor(t/(w+b)),tot=rds*(w+b);
-    $('ii').innerHTML=rds?`→ <b>${rds}×</b> Arbeit·${w}s + Pause·${b}s = <b>${fmt(tot)}</b>`:'→ keine Runden';
-    if(S==='idle'){$('clk').textContent=fmt(w);$('s1').textContent=`Arbeit 0 / ${rds}`;$('s2').textContent=`Gesamt: ${fmt(tot)}`}
-  } else {
-    const n=+$('rn').value||5,e=+$('re').value||6,w=+$('rw').value||40,ep=+$('rep').value||10,rp=+$('rrp').value||60;
-    const rLen=e*w+(e-1)*ep,tot=n*rLen+(n-1)*rp;
-    $('ri').innerHTML=`→ <b>${n}×${e}</b> Übungen · <b>${fmt(tot)}</b> Gesamt`;
-    if(S==='idle'){$('clk').textContent=fmt(w);$('s1').textContent=`Runde 0 / ${n}`;$('s2').textContent=`Gesamt: ${fmt(tot)}`;$('exn').textContent=''}
-    buildExInputs();
+  const n=+$('rn').value||5,e=+$('re').value||6,w=+$('rw').value||40,ep=+$('rep').value||10,rp=+$('rrp').value||60;
+  const tot=n*(e*w+(e-1)*ep)+(n-1)*rp;
+  $('ri').innerHTML=`→ <b>${n}×${e}</b> Übungen · <b>${fmt(tot)}</b> Gesamt`;
+  if(S==='idle'){
+    $('clk').textContent=fmt(w);
+    $('s1').textContent=`Runde 0 / ${n}`;
+    $('s2').textContent=`Gesamt: ${fmt(tot)}`;
+    $('exn').textContent='';
   }
+  buildExInputs();
 }
 
 // ── exercise names ────────────────────────────────────────────────────────────
@@ -244,18 +182,19 @@ function buildExInputs(){
   exNames.length=n;
   const c=$('exInputs');c.innerHTML='';
   for(let i=0;i<n;i++){
-    const w=document.createElement('div');w.className='ex-wrap';
+    const wrap=document.createElement('div');wrap.className='ex-wrap';
     const num=document.createElement('span');num.className='ex-num';num.textContent=i+1;
-    const inp=document.createElement('input');inp.type='text';inp.className='ex-inp';
+    const inp=document.createElement('input');
+    inp.type='text';inp.className='ex-inp';
     inp.placeholder=`Übung ${i+1}`;inp.value=exNames[i];
-    inp.addEventListener('input',e=>{exNames[i]=e.target.value});
-    w.appendChild(num);w.appendChild(inp);c.appendChild(w);
+    inp.addEventListener('input',ev=>{exNames[i]=ev.target.value});
+    wrap.appendChild(num);wrap.appendChild(inp);c.appendChild(wrap);
   }
 }
 
 function toggleExN(){
   exNOpen=!exNOpen;
-  $('exInputs').classList.toggle('hidden',!exNOpen);
+  $('exInputs').classList.toggle('open',exNOpen);
   $('exarr').classList.toggle('open',exNOpen);
   $('exarr').textContent=exNOpen?'▼':'▶';
 }
@@ -273,25 +212,19 @@ function beep(f,d,v=.38,t='sine'){
     o.start();o.stop(ctx.currentTime+d);
   }catch(e){}
 }
-// work start: 2× high beep | rest start: 1× mid | round-pause: 2× low | countdown: soft | done: fanfare
 const sfx={
   w:  ()=>{beep(880,.13);setTimeout(()=>beep(880,.13),170)},
-  b:  ()=> beep(440,.38),
+  b:  ()=>  beep(440,.38),
   rp: ()=>{beep(330,.22);setTimeout(()=>beep(330,.55),280)},
-  tk: ()=> beep(660,.08,.18),
+  tk: ()=>  beep(660,.08,.18),
   dn: ()=>{beep(523,.2);setTimeout(()=>beep(659,.2),230);setTimeout(()=>beep(784,.5),460)}
 }
 
-// ── wake lock ─────────────────────────────────────────────────────────────────
 async function wlSet(on){
   try{if(on&&'wakeLock'in navigator)wl=await navigator.wakeLock.request('screen');
       else if(wl){await wl.release();wl=null}}catch(e){}
 }
-
-// ── flash ─────────────────────────────────────────────────────────────────────
-function flash(){
-  const el=$('arena');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
-}
+function flash(){const el=$('arena');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
 
 // ── controls ──────────────────────────────────────────────────────────────────
 function doTog(){
@@ -299,48 +232,17 @@ function doTog(){
   else if(S==='running')doPause();
   else doResume();
 }
+function lock(on){$('cfg').classList.toggle('locked',on)}
 
-function lock(on){$('cfg').classList.toggle('locked',on);$('tabs').classList.toggle('locked',on)}
-
-// ── INTERVAL ──────────────────────────────────────────────────────────────────
-function startI(){
-  const w=+$('iw').value||40,b=+$('ib').value||20,t=(+$('it').value||20)*60;
-  totW=Math.floor(t/(w+b));if(!totW)return false;
-  tSec=totW*(w+b);iPh='w';wN=1;iSec=w;iTot=w;
-  setStyle();sfx.w();flash();updateI();return true;
-}
-
-function tickI(){
-  iSec--;tSec--;
-  if(iSec<=3&&iSec>0)sfx.tk();
-  if(iSec<=0){
-    const w=+$('iw').value||40,b=+$('ib').value||20;
-    if(iPh==='w'){
-      if(wN>=totW){finish();return}
-      iPh='b';iSec=b;iTot=b;setStyle();sfx.b();flash();
-    } else {
-      iPh='w';wN++;iSec=w;iTot=w;setStyle();sfx.w();flash();
-    }
-  }
-  updateI();
-}
-
-function updateI(){
-  const label=($('ilabel').value||'').trim();
-  $('clk').textContent=fmt(iSec);
-  $('exn').textContent=iPh==='w'?label:'';
-  $('exn').className='exname';
-  $('s1').textContent=iPh==='w'?`Arbeit ${wN} / ${totW}`:`Pause ${wN} / ${totW-1}`;
-  $('s2').textContent=`Gesamt: ${fmt(tSec)}`;
-  $('bar').style.width=`${((iTot-iSec)/iTot)*100}%`;
-}
-
-// ── ROUNDS ────────────────────────────────────────────────────────────────────
-function startR(){
+function doStart(){
+  if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();
   const n=+$('rn').value||5,e=+$('re').value||6,w=+$('rw').value||40,ep=+$('rep').value||10,rp=+$('rrp').value||60;
   rRnd=1;rEx=1;rPh='w';rSec=w;rItot=w;
-  rTot=n*(e*w+(e-1)*ep)+(n-1)*rp;rTot0=rTot;
-  setStyle();sfx.w();flash();updateR();return true;
+  rTot=n*(e*w+(e-1)*ep)+(n-1)*rp;
+  S='running';lock(true);
+  $('go').textContent='PAUSE';$('go').className='btn go run';
+  setStyle();sfx.w();flash();updateR();
+  ticker=setInterval(tickR,1000);wlSet(true);
 }
 
 function tickR(){
@@ -352,84 +254,69 @@ function tickR(){
       const lastE=rEx>=e,lastR=rRnd>=n;
       if(lastE&&lastR){finish();return}
       if(lastE){
-        if(rp>0){rPh='rp';rSec=rp;rItot=rp;setStyle();sfx.rp();flash();}
-        else{rRnd++;rEx=1;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();flash();}
+        if(rp>0){rPh='rp';rSec=rp;rItot=rp;setStyle();sfx.rp();}
+        else{rRnd++;rEx=1;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();}
       } else {
-        if(ep>0){rPh='ep';rSec=ep;rItot=ep;setStyle();sfx.b();flash();}
-        else{rEx++;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();flash();}
+        if(ep>0){rPh='ep';rSec=ep;rItot=ep;setStyle();sfx.b();}
+        else{rEx++;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();}
       }
     } else if(rPh==='ep'){
-      rEx++;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();flash();
+      rEx++;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();
     } else {
-      rRnd++;rEx=1;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();flash();
+      rRnd++;rEx=1;rPh='w';rSec=w;rItot=w;setStyle();sfx.w();
     }
+    flash();
   }
   updateR();
 }
 
 function updateR(){
-  $('clk').textContent=fmt(rSec);
   const n=+$('rn').value||5,e=+$('re').value||6;
-  // exercise name: show current; during pause show next
+  $('clk').textContent=fmt(rSec);
   if(rPh==='w'){
-    $('exn').textContent=exNames[rEx-1]||'';$('exn').className='exname';
+    $('exn').textContent=exNames[rEx-1]||'';
+    $('exn').className='exname';
   } else if(rPh==='ep'){
-    const nxt=exNames[rEx]||''; // rEx not yet incremented → next is index rEx
-    $('exn').textContent=nxt?`→ ${nxt}`:'';$('exn').className='exname next';
+    const nxt=exNames[rEx]||'';
+    $('exn').textContent=nxt?`→ ${nxt}`:'';
+    $('exn').className='exname next';
   } else {
     const first=exNames[0]||'';
-    $('exn').textContent=first?`→ ${first}`:'';$('exn').className='exname next';
+    $('exn').textContent=first?`→ ${first}`:'';
+    $('exn').className='exname next';
   }
-  if(rPh==='w')      $('s1').textContent=`Runde ${rRnd} / ${n}  ·  Übung ${rEx} / ${e}`;
-  else if(rPh==='ep')$('s1').textContent=`Runde ${rRnd} / ${n}  ·  nächste Übung ${rEx+1}`;
-  else               $('s1').textContent=`Runde ${rRnd} / ${n}  ·  Rundenpause`;
+  if(rPh==='w')      $('s1').textContent=`Runde ${rRnd}/${n}  ·  Übung ${rEx}/${e}`;
+  else if(rPh==='ep')$('s1').textContent=`Runde ${rRnd}/${n}  ·  nächste Übung ${rEx+1}`;
+  else               $('s1').textContent=`Runde ${rRnd}/${n}  ·  Rundenpause`;
   $('s2').textContent=`Gesamt: ${fmt(rTot)}`;
   $('bar').style.width=`${((rItot-rSec)/rItot)*100}%`;
 }
 
-// ── phase style ───────────────────────────────────────────────────────────────
 function setStyle(){
-  const ph=M==='i'?iPh:rPh;
-  const map={w:'pw',b:'pb',ep:'pb',rp:'prp'};
-  $('R').className=map[ph]||'pi';
-  const labels={w:'ARBEIT',b:'PAUSE',ep:'PAUSE',rp:'RUNDEN-PAUSE'};
-  $('lbl').textContent=labels[ph]||'BEREIT';
-}
-
-// ── common ────────────────────────────────────────────────────────────────────
-function doStart(){
-  if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)(); // unlock on gesture
-  const ok=M==='i'?startI():startR();
-  if(!ok)return;
-  S='running';lock(true);
-  $('go').textContent='PAUSE';$('go').className='btn go run';
-  tick=setInterval(()=>M==='i'?tickI():tickR(),1000);
-  wlSet(true);
+  $('R').className={w:'pw',ep:'pb',b:'pb',rp:'prp'}[rPh]||'pi';
+  $('lbl').textContent={w:'ARBEIT',ep:'PAUSE',b:'PAUSE',rp:'RUNDEN-PAUSE'}[rPh]||'BEREIT';
 }
 
 function doPause(){
-  clearInterval(tick);S='paused';
+  clearInterval(ticker);S='paused';
   $('go').textContent='WEITER';$('go').className='btn go pau';
   wlSet(false);
 }
-
 function doResume(){
-  S='running';tick=setInterval(()=>M==='i'?tickI():tickR(),1000);
+  S='running';ticker=setInterval(tickR,1000);
   $('go').textContent='PAUSE';$('go').className='btn go run';
   wlSet(true);
 }
-
 function finish(){
-  clearInterval(tick);S='done';wlSet(false);
+  clearInterval(ticker);S='done';wlSet(false);
   $('R').className='pd';$('lbl').textContent='FERTIG!';
   $('s1').textContent='';$('s2').textContent='';
   $('bar').style.width='100%';
   $('go').textContent='NEU';$('go').className='btn go';
   sfx.dn();
 }
-
 function doRst(){
-  clearInterval(tick);S='idle';wlSet(false);
+  clearInterval(ticker);S='idle';wlSet(false);
   $('R').className='pi';lock(false);
   $('go').textContent='START';$('go').className='btn go';
   $('lbl').textContent='BEREIT';$('bar').style.width='0%';
